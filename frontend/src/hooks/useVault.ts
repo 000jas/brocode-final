@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { ethers } from "ethers";
+import { useWallet } from "@/context/WalletContext";
 
 // Mock vault contract address and ABI for demonstration
 // In a real application, these would be actual contract details
@@ -13,6 +14,7 @@ const VAULT_ABI = [
 export function useVault() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { account, connectWallet } = useWallet();
 
   const getBalance = useCallback(async (account: string): Promise<string> => {
     if (!window.ethereum) {
@@ -49,7 +51,6 @@ export function useVault() {
     try {
       setLoading(true);
       setError(null);
-
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(VAULT_CONTRACT_ADDRESS, VAULT_ABI, signer);
@@ -165,7 +166,6 @@ export function useVault() {
     try {
       setLoading(true);
       setError(null);
-
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(VAULT_CONTRACT_ADDRESS, VAULT_ABI, signer);

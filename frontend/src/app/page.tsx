@@ -52,9 +52,7 @@ export default function HomePage() {
         </section>
 
        
-        <section className="mb-10">
-          <Dashboard balance={balance} totalReturns={totalReturns} />
-        </section>
+       
 
         
       </main>

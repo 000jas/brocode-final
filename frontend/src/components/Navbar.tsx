@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -11,6 +12,7 @@ export default function Navbar() {
       </Link>
 
       <div className="flex gap-6 items-center">
+      <Link href="/dashboard" className="hover:underline">Dashboard</Link>
         <Link href="/portfolio" className="hover:underline">Portfolio</Link>
         <Link href="/transactions" className="hover:underline">Transactions</Link>
         <Link href="/vaults" className="hover:underline">Vaults</Link>
