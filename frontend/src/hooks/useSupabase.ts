@@ -14,7 +14,7 @@ export interface Vault {
   id: string;
   name: string;
   description?: string;
-  creator_id: string;
+  creator_profile_id: string;
   total_deposits: number;
   total_members: number;
   is_active: boolean;
@@ -25,7 +25,7 @@ export interface Vault {
 export interface VaultMember {
   id: string;
   vault_id: string;
-  user_id: string;
+  profile_id: string;
   deposit_amount: number;
   share_percentage: number;
   joined_at: string;
@@ -34,7 +34,7 @@ export interface VaultMember {
 export interface Transaction {
   id: string;
   vault_id?: string;
-  user_id?: string;
+  profile_id?: string;
   type: 'deposit' | 'withdraw' | 'reward';
   amount: number;
   tx_hash?: string;
@@ -50,7 +50,7 @@ export function useSupabase() {
   const getUserByWallet = async (walletAddress: string): Promise<User | null> => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('wallet_address', walletAddress)
         .single();
@@ -71,7 +71,7 @@ export function useSupabase() {
   const upsertUser = async (walletAddress: string): Promise<User | null> => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .upsert({ wallet_address: walletAddress })
         .select()
         .single();
@@ -110,14 +110,14 @@ export function useSupabase() {
   };
 
   // Create a new vault
-  const createVault = async (name: string, description: string, creatorId: string): Promise<Vault | null> => {
+  const createVault = async (name: string, description: string, creatorProfileId: string): Promise<Vault | null> => {
     try {
       const { data, error } = await supabase
         .from('vaults')
         .insert({
           name,
           description,
-          creator_id: creatorId
+          creator_profile_id: creatorProfileId
         })
         .select()
         .single();
@@ -135,13 +135,13 @@ export function useSupabase() {
   };
 
   // Join a vault
-  const joinVault = async (vaultId: string, userId: string, depositAmount: number): Promise<VaultMember | null> => {
+  const joinVault = async (vaultId: string, profileId: string, depositAmount: number): Promise<VaultMember | null> => {
     try {
       const { data, error } = await supabase
         .from('vault_members')
         .insert({
           vault_id: vaultId,
-          user_id: userId,
+          profile_id: profileId,
           deposit_amount: depositAmount
         })
         .select()
@@ -160,12 +160,12 @@ export function useSupabase() {
   };
 
   // Get user's vault memberships
-  const getUserVaults = async (userId: string): Promise<VaultMember[]> => {
+  const getUserVaults = async (profileId: string): Promise<VaultMember[]> => {
     try {
       const { data, error } = await supabase
         .from('vault_members')
         .select('*')
-        .eq('user_id', userId);
+        .eq('profile_id', profileId);
 
       if (error) {
         console.error('Error fetching user vaults:', error);
@@ -180,12 +180,12 @@ export function useSupabase() {
   };
 
   // Get transactions for a user
-  const getUserTransactions = async (userId: string): Promise<Transaction[]> => {
+  const getUserTransactions = async (profileId: string): Promise<Transaction[]> => {
     try {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -203,7 +203,7 @@ export function useSupabase() {
   // Record a transaction
   const recordTransaction = async (
     vaultId: string | null,
-    userId: string,
+    profileId: string,
     type: 'deposit' | 'withdraw' | 'reward',
     amount: number,
     txHash?: string
@@ -213,7 +213,7 @@ export function useSupabase() {
         .from('transactions')
         .insert({
           vault_id: vaultId,
-          user_id: userId,
+          profile_id: profileId,
           type,
           amount,
           tx_hash: txHash,

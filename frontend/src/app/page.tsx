@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 // src/app/page.tsx
 "use client";
 
@@ -37,3 +38,5 @@ export default function ConnectVaultPage() {
     </div>
   );
 }
+=======
+>>>>>>> Stashed changes
