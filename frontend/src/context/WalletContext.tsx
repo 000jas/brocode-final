@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { ethers } from "ethers";
 
 // Extend the Window interface to include ethereum
@@ -26,42 +26,71 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
 
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
-        setAccount(accounts[0]);
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
-        alert("Failed to connect wallet. Please try again.");
-      }
-    } else {
+  const connectWallet = useCallback(async () => {
+    if (!window.ethereum) {
       alert("Please install MetaMask!");
+      return;
     }
-  };
 
-  const disconnectWallet = () => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = (await provider.send("eth_requestAccounts", [])) as string[];
+      if (accounts && accounts.length > 0) {
+        setAccount(accounts[0]);
+      }
+    } catch (error) {
+      console.error("Failed to connect wallet:", error);
+      alert("Failed to connect wallet. Please try again.");
+    }
+  }, []);
+
+  const disconnectWallet = useCallback(() => {
     setAccount(null);
-  };
+  }, []);
 
-  // Check if wallet is already connected on component mount
+  // Check if wallet is already connected and listen to account/chain changes
   useEffect(() => {
     const checkConnection = async () => {
-      if (window.ethereum) {
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const accounts = await provider.send("eth_accounts", []);
-          if (accounts.length > 0) {
-            setAccount(accounts[0]);
-          }
-        } catch (error) {
-          console.error("Failed to check wallet connection:", error);
+      if (!window.ethereum) return;
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = (await provider.send("eth_accounts", [])) as string[];
+        if (accounts && accounts.length > 0) {
+          setAccount(accounts[0]);
         }
+      } catch (error) {
+        console.error("Failed to check wallet connection:", error);
+      }
+    };
+
+    const handleAccountsChanged = (accounts: unknown) => {
+      if (Array.isArray(accounts) && accounts.length > 0 && typeof accounts[0] === "string") {
+        setAccount(accounts[0]);
+      } else {
+        setAccount(null);
+      }
+    };
+
+    const handleChainChanged = () => {
+      // Reload to ensure app picks up the new network
+      if (typeof window !== "undefined") {
+        window.location.reload();
       }
     };
 
     checkConnection();
+
+    if (window.ethereum?.on) {
+      window.ethereum.on("accountsChanged", handleAccountsChanged as (...args: unknown[]) => void);
+      window.ethereum.on("chainChanged", handleChainChanged as (...args: unknown[]) => void);
+    }
+
+    return () => {
+      if (window.ethereum?.removeListener) {
+        window.ethereum.removeListener("accountsChanged", handleAccountsChanged as (...args: unknown[]) => void);
+        window.ethereum.removeListener("chainChanged", handleChainChanged as (...args: unknown[]) => void);
+      }
+    };
   }, []);
 
   const value: WalletContextType = {

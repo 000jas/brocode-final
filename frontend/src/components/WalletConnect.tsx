@@ -1,10 +1,9 @@
 "use client";
 
-import { useContext } from "react";
-import { WalletContext } from "@/context/WalletContext";
+import { useWallet } from "@/context/WalletContext";
 
 export default function WalletConnect() {
-  const { account, connectWallet, disconnectWallet } = useContext(WalletContext);
+  const { account, connectWallet, disconnectWallet } = useWallet();
 
   return (
     account ? (
