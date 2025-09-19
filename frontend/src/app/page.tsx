@@ -1,19 +1,24 @@
-<<<<<<< Updated upstream
+
 // src/app/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/lib/useWallet";
+import { useWallet } from "@/context/WalletContext";
 import { Button } from "@/components/ui/button";
 
 export default function ConnectVaultPage() {
-  const { connectWallet, isConnecting, address } = useWallet();
+  const { connectWallet, account: address, isConnected } = useWallet();
   const router = useRouter();
 
   async function handleConnect() {
-    const userAddress = await connectWallet();
-    if (userAddress) {
-      router.push("/home"); // Redirect to home after connection
+    try {
+      await connectWallet();
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        router.push("/home"); // Redirect to home after connection
+      }, 100);
+    } catch (error) {
+      console.error("Connection failed:", error);
     }
   }
 
@@ -25,10 +30,10 @@ export default function ConnectVaultPage() {
       </p>
       <Button
         onClick={handleConnect}
-        disabled={isConnecting}
+        disabled={isConnected}
         className="px-6 py-3 text-lg rounded-xl"
       >
-        {isConnecting ? "Connecting..." : "Connect Vault"}
+        {isConnected ? "Connected" : "Connect Vault"}
       </Button>
       {address && (
         <p className="mt-4 text-sm text-green-600">
@@ -38,5 +43,3 @@ export default function ConnectVaultPage() {
     </div>
   );
 }
-=======
->>>>>>> Stashed changes
