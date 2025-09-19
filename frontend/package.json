@@ -9,11 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0",
     "@web3modal/wagmi": "^5.1.11",
     "ethers": "^6.15.0",
-    "hardhat": "^3.0.6",
-    "next": "^15.5.3",
+    "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "wagmi": "^2.17.0"
