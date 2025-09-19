@@ -1,26 +1,19 @@
 "use client";
 
-import { useWallet } from "@/hooks/useWallet";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useWallet } from "@/lib/useWallet";
+import Navbar from "@/components/Navbar";
 
 export default function HomePage() {
-  const { address, disconnectWallet } = useWallet();
-  const router = useRouter();
-
-  const handleDisconnect = () => {
-    disconnectWallet();
-    router.push("/");
-  };
+  const { address } = useWallet();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
+      <Navbar />
+      
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">VaultX Dashboard</h1>
-          <Button onClick={handleDisconnect} variant="danger">
-            Disconnect Wallet
-          </Button>
+          <p className="text-gray-600 mt-2">Welcome to your vault management dashboard</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6">

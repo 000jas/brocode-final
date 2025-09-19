@@ -1,22 +1,60 @@
-
 "use client";
 
 import Link from "next/link";
-import WalletConnect from "./WalletConnect";
+import { usePathname } from "next/navigation";
+import { useWallet } from "@/lib/useWallet";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
-  return (
-    <nav className="w-full bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
-      <Link href="/" className="text-xl font-bold">
-        Shardeum Vaults
-      </Link>
+  const pathname = usePathname();
+  const { address, disconnectWallet } = useWallet();
 
-      <div className="flex gap-6 items-center">
-      <Link href="/dashboard" className="hover:underline">Dashboard</Link>
-        <Link href="/portfolio" className="hover:underline">Portfolio</Link>
-        <Link href="/transactions" className="hover:underline">Transactions</Link>
-        <Link href="/vaults" className="hover:underline">Vaults</Link>
-        <WalletConnect />
+  const handleDisconnect = () => {
+    disconnectWallet();
+    window.location.href = "/";
+  };
+
+  const navItems = [
+    { href: "/home", label: "Home" },
+    { href: "/portfolio", label: "Portfolio" },
+    { href: "/vaults", label: "Vaults" },
+    { href: "/transactions", label: "Transactions" },
+  ];
+
+  return (
+    <nav className="bg-gray-900 text-white px-6 py-4">
+      <div className="max-w-6xl mx-auto flex justify-between items-center">
+        {/* Logo */}
+        <Link href="/home" className="text-xl font-bold">
+          VaultX
+        </Link>
+
+        {/* Navigation Links */}
+        <div className="flex space-x-6">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`hover:text-blue-400 transition-colors ${
+                pathname === item.href ? "text-blue-400 font-semibold" : ""
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Wallet Info & Disconnect */}
+        <div className="flex items-center space-x-4">
+          {address && (
+            <span className="px-3 py-2 rounded-lg bg-gray-800 text-sm">
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </span>
+          )}
+          <Button onClick={handleDisconnect} variant="danger" size="sm">
+            Disconnect
+          </Button>
+        </div>
       </div>
     </nav>
   );

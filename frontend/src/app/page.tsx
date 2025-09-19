@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/lib/useWallet";
 import { Button } from "@/components/ui/button";
 
 export default function ConnectVaultPage() {

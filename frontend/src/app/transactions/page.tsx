@@ -1,65 +1,55 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
-import { WalletContext } from "@/context/WalletContext";
-import { useVault } from "@/hooks/useVault";
-
-interface Tx {
-  type: "deposit" | "withdraw";
-  amount: string;
-  txHash: string;
-}
+import { useWallet } from "@/lib/useWallet";
+import Navbar from "@/components/Navbar";
 
 export default function TransactionsPage() {
-  const { account } = useContext(WalletContext);
-  const { getTransactions } = useVault(); // implement this in your hook
-  const [transactions, setTransactions] = useState<Tx[]>([]);
-
-  useEffect(() => {
-    if (account) {
-      getTransactions(account).then((txs) => setTransactions(txs));
-    }
-  }, [account]);
+  const { address } = useWallet();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">📜 Transactions</h1>
-
-      {!account ? (
-        <p className="text-gray-500">Connect wallet to view your transactions.</p>
-      ) : transactions.length === 0 ? (
-        <p className="text-gray-500">No transactions found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-4 py-2 text-left">Type</th>
-                <th className="border px-4 py-2 text-left">Amount</th>
-                <th className="border px-4 py-2 text-left">Tx Hash</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx, i) => (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="border px-4 py-2 capitalize">{tx.type}</td>
-                  <td className="border px-4 py-2">{tx.amount} SHM</td>
-                  <td className="border px-4 py-2">
-                    <a
-                      href={`https://explorer-sphinx.shardeum.org/tx/${tx.txHash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {tx.txHash.slice(0, 6)}...{tx.txHash.slice(-4)}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
+          <p className="text-gray-600 mt-2">View your transaction history and track all vault activities</p>
         </div>
-      )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Deposits</h3>
+            <p className="text-2xl font-bold text-green-600">$0.00</p>
+            <p className="text-sm text-gray-500">All time</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Withdrawals</h3>
+            <p className="text-2xl font-bold text-red-600">$0.00</p>
+            <p className="text-sm text-gray-500">All time</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Rewards</h3>
+            <p className="text-2xl font-bold text-purple-600">$0.00</p>
+            <p className="text-sm text-gray-500">Earned</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-2">Transactions</h3>
+            <p className="text-2xl font-bold text-blue-600">0</p>
+            <p className="text-sm text-gray-500">Total count</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-lg mb-2">No transactions yet</p>
+            <p className="text-sm">Your transaction history will appear here once you start using vaults</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

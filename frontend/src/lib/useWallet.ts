@@ -8,6 +8,10 @@ export function useWallet() {
   const [address, setAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
+  const disconnectWallet = () => {
+    setAddress(null);
+  };
+
   async function connectWallet() {
     try {
       if (!window.ethereum) {
@@ -35,5 +39,5 @@ export function useWallet() {
     }
   }
 
-  return { address, isConnecting, connectWallet };
+  return { address, isConnecting, connectWallet, disconnectWallet };
 }
