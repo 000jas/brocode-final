@@ -1,63 +1,39 @@
+// src/app/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Navbar from "@/components/Navbar";
-import Dashboard from "@/components/Dashboard";
-import { useWallet } from "@/context/WalletContext";
-import { useVault } from "@/hooks/useVault";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@/hooks/useWallet";
+import { Button } from "@/components/ui/button";
 
-export default function HomePage() {
-  const { account } = useWallet();
-  const { getBalance } = useVault();
+export default function ConnectVaultPage() {
+  const { connectWallet, isConnecting, address } = useWallet();
+  const router = useRouter();
 
-  const [balance, setBalance] = useState<string>("0");
-  const [totalReturns, setTotalReturns] = useState<string>("0");
-
-  useEffect(() => {
-    let isActive = true;
-    const fetchBalance = async () => {
-      if (!account) {
-        setBalance("0");
-        return;
-      }
-      const b = await getBalance(account);
-      if (isActive) setBalance(b);
-    };
-    fetchBalance();
-    return () => {
-      isActive = false;
-    };
-  }, [account, getBalance]);
-
-  useEffect(() => {
-    // Demo-only: derive mock returns from balance
-    try {
-      const returns = (parseFloat(balance || "0") * 0.05).toFixed(2);
-      setTotalReturns(returns);
-    } catch {
-      setTotalReturns("0");
+  async function handleConnect() {
+    const userAddress = await connectWallet();
+    if (userAddress) {
+      router.push("/home"); // Redirect to home after connection
     }
-  }, [balance]);
-
-  
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
-      <main className="px-6 py-8 max-w-6xl mx-auto">
-        <section className="mb-8">
-          <h1 className="text-3xl font-bold">🏦 BroCode Vault</h1>
-          <p className="text-gray-600 mt-2">Secure, simple, and transparent community vaults on Shardeum.</p>
-        </section>
-
-       
-        <section className="mb-10">
-          <Dashboard balance={balance} totalReturns={totalReturns} />
-        </section>
-
-        
-      </main>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
+      <h1 className="text-3xl font-bold mb-6">Welcome to VaultX</h1>
+      <p className="mb-6 text-gray-600">
+        Connect your wallet to start exploring and investing in vaults.
+      </p>
+      <Button
+        onClick={handleConnect}
+        disabled={isConnecting}
+        className="px-6 py-3 text-lg rounded-xl"
+      >
+        {isConnecting ? "Connecting..." : "Connect Vault"}
+      </Button>
+      {address && (
+        <p className="mt-4 text-sm text-green-600">
+          Connected: {address.slice(0, 6)}...{address.slice(-4)}
+        </p>
+      )}
     </div>
   );
 }
