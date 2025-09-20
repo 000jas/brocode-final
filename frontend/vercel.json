@@ -1,0 +1,17 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next_public_supabase_anon_key",
+    "NEXT_PUBLIC_RPC_URL": "@next_public_rpc_url",
+    "NEXT_PUBLIC_DEPOSIT_VAULT_ADDRESS": "@next_public_deposit_vault_address",
+    "NEXT_PUBLIC_WITHDRAW_HANDLER_ADDRESS": "@next_public_withdraw_handler_address",
+    "NEXT_PUBLIC_SHM_TOKEN_ADDRESS": "@next_public_shm_token_address",
+    "NEXT_PUBLIC_NETWORK_NAME": "@next_public_network_name",
+    "NEXT_PUBLIC_CHAIN_ID": "@next_public_chain_id"
+  }
+}
