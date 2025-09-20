@@ -1,199 +1,173 @@
-import { useState, useCallback } from "react";
-import { ethers } from "ethers";
-import { useWallet } from "@/context/WalletContext";
+"use client";
 
-// Mock vault contract address and ABI for demonstration
-// In a real application, these would be actual contract details
-const VAULT_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
-const VAULT_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function deposit() payable",
-  "function withdraw(uint256 amount)",
-];
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+export interface Vault {
+  id: string;
+  user_address: string;
+  vault_name: string;
+  description: string | null;
+  created_at: string;
+  initial_deposit: number;
+}
 
 export function useVault() {
-  const [loading, setLoading] = useState(false);
+  const [vaults, setVaults] = useState<Vault[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { account, connectWallet } = useWallet();
 
-  const getBalance = useCallback(async (account: string): Promise<string> => {
-    if (!window.ethereum) {
-      throw new Error("MetaMask not installed");
-    }
-
+  // Fetch all vaults
+  const fetchVaults = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      const { data, error } = await supabase
+        .from("vaults")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(VAULT_CONTRACT_ADDRESS, VAULT_ABI, provider);
-      
-      // For demo purposes, return a mock balance
-      // In a real app, you would call: const balance = await contract.balanceOf(account);
-      const mockBalance = "1000.5";
-      
-      return mockBalance;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to get balance";
-      setError(errorMessage);
-      console.error("Error getting vault balance:", err);
-      return "0";
+      if (error) {
+        // Check if it's a "table doesn't exist" error
+        if (error.code === "42P01" || error.message?.includes("relation") || error.message?.includes("does not exist")) {
+          throw new Error("Vaults table not found. Please apply the database schema first by running: node scripts/apply-vault-schema.js");
+        }
+        throw new Error(error.message);
+      }
+
+      setVaults(data || []);
+    } catch (err: any) {
+      console.error("Error fetching vaults:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const deposit = useCallback(async (amount: string): Promise<boolean> => {
-    if (!window.ethereum) {
-      throw new Error("MetaMask not installed");
-    }
-
+  // Check if user has a vault
+  const checkUserVault = async (userAddress: string): Promise<boolean> => {
     try {
-      setLoading(true);
-      setError(null);
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(VAULT_CONTRACT_ADDRESS, VAULT_ABI, signer);
-      
-      // For demo purposes, just simulate a successful transaction
-      // In a real app, you would call: await contract.deposit({ value: ethers.parseEther(amount) });
-      console.log(`Simulating deposit of ${amount} SHM`);
-      
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to deposit";
-      setError(errorMessage);
-      console.error("Error depositing to vault:", err);
+      const { data, error } = await supabase
+        .from("vaults")
+        .select("id")
+        .eq("user_address", userAddress)
+        .single();
+
+      if (error) {
+        // Check if it's a "table doesn't exist" error
+        if (error.code === "42P01" || error.message?.includes("relation") || error.message?.includes("does not exist")) {
+          console.warn("Vaults table not found. Please apply the database schema first.");
+          return false;
+        }
+        
+        // Check if it's a "not found" error (user doesn't have a vault)
+        if (error.code === "PGRST116") {
+          return false;
+        }
+        
+        throw new Error(error.message);
+      }
+
+      return !!data;
+    } catch (err: any) {
+      console.error("Error checking user vault:", err);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  };
 
-  const getTransactions = useCallback(
-    async (
-      account: string
-    ): Promise<Array<{ type: "deposit" | "withdraw"; amount: string; txHash: string }>> => {
-      if (!window.ethereum) {
-        throw new Error("MetaMask not installed");
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        // In a real implementation, fetch on-chain logs or from an indexer/backend
-        // For demo purposes, return mock transactions filtered by account (unused here)
-        const mockTxs = [
-          { type: "deposit" as const, amount: "100", txHash: "0xabc123abc123abc123abc123abc123abc123abcd" },
-          { type: "withdraw" as const, amount: "25", txHash: "0xdef456def456def456def456def456def456def0" },
-        ];
-
-        return mockTxs;
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to get transactions";
-        setError(errorMessage);
-        console.error("Error getting transactions:", err);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  const getVaults = useCallback(
-    async (): Promise<Array<{ id: number; name: string; totalDeposits: string; members: number }>> => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // No dummy data. Hook is ready for real integration (chain/backend).
-        return [];
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch vaults";
-        setError(errorMessage);
-        console.error("Error fetching vaults:", err);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  const createVault = useCallback(async (name: string): Promise<boolean> => {
+  // Check if vault name is unique
+  const checkVaultNameUnique = async (vaultName: string): Promise<boolean> => {
     try {
-      setLoading(true);
-      setError(null);
+      const { data, error } = await supabase
+        .from("vaults")
+        .select("id")
+        .eq("vault_name", vaultName)
+        .single();
 
-      // Demo only. Replace with contract call or API.
-      console.log(`Simulating createVault with name: ${name}`);
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create vault";
-      setError(errorMessage);
+      if (error) {
+        // Check if it's a "table doesn't exist" error
+        if (error.code === "42P01" || error.message?.includes("relation") || error.message?.includes("does not exist")) {
+          console.warn("Vaults table not found. Please apply the database schema first.");
+          return true; // Assume unique if table doesn't exist
+        }
+        
+        // Check if it's a "not found" error (name is unique)
+        if (error.code === "PGRST116") {
+          return true;
+        }
+        
+        throw new Error(error.message);
+      }
+
+      return !data; // Return true if no data found (name is unique)
+    } catch (err: any) {
+      console.error("Error checking vault name uniqueness:", err);
+      return false;
+    }
+  };
+
+  // Create a new vault
+  const createVault = async (vaultData: {
+    user_address: string;
+    vault_name: string;
+    description?: string;
+    initial_deposit: number;
+  }): Promise<Vault> => {
+    try {
+      const { data, error } = await supabase
+        .from("vaults")
+        .insert(vaultData)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Refresh vaults list
+      await fetchVaults();
+      
+      return data;
+    } catch (err: any) {
       console.error("Error creating vault:", err);
-      return false;
-    } finally {
-      setLoading(false);
+      throw err;
     }
-  }, []);
+  };
 
-  const joinVault = useCallback(async (id: number, amount: string): Promise<boolean> => {
+  // Get vault by user address
+  const getVaultByUser = async (userAddress: string): Promise<Vault | null> => {
     try {
-      setLoading(true);
-      setError(null);
+      const { data, error } = await supabase
+        .from("vaults")
+        .select("*")
+        .eq("user_address", userAddress)
+        .single();
 
-      // Demo only. Replace with contract call sending value.
-      console.log(`Simulating joinVault id=${id} amount=${amount} SHM`);
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to join vault";
-      setError(errorMessage);
-      console.error("Error joining vault:", err);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      if (error && error.code !== "PGRST116") {
+        throw new Error(error.message);
+      }
 
-  const withdraw = useCallback(async (amount: string): Promise<boolean> => {
-    if (!window.ethereum) {
-      throw new Error("MetaMask not installed");
+      return data || null;
+    } catch (err: any) {
+      console.error("Error fetching user vault:", err);
+      return null;
     }
+  };
 
-    try {
-      setLoading(true);
-      setError(null);
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(VAULT_CONTRACT_ADDRESS, VAULT_ABI, signer);
-      
-      // For demo purposes, just simulate a successful transaction
-      // In a real app, you would call: await contract.withdraw(ethers.parseEther(amount));
-      console.log(`Simulating withdrawal of ${amount} SHM`);
-      
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to withdraw";
-      setError(errorMessage);
-      console.error("Error withdrawing from vault:", err);
-      return false;
-    } finally {
-      setLoading(false);
-    }
+  // Load vaults on mount
+  useEffect(() => {
+    fetchVaults();
   }, []);
 
   return {
-    getBalance,
-    getTransactions,
-    getVaults,
-    createVault,
-    joinVault,
-    deposit,
-    withdraw,
+    vaults,
     loading,
     error,
+    fetchVaults,
+    checkUserVault,
+    checkVaultNameUnique,
+    createVault,
+    getVaultByUser,
   };
 }

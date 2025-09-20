@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useWallet } from "@/lib/useWallet";
+import { useWallet } from "@/context/WalletContext";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { address, disconnectWallet } = useWallet();
+  const { account, disconnectWallet } = useWallet();
 
   const handleDisconnect = () => {
     disconnectWallet();
@@ -18,6 +18,7 @@ export default function Navbar() {
     { href: "/home", label: "Home" },
     { href: "/portfolio", label: "Portfolio" },
     { href: "/vaults", label: "Vaults" },
+    { href: "/create-vault", label: "Create Vault" },
     { href: "/transactions", label: "Transactions" },
   ];
 
@@ -46,9 +47,9 @@ export default function Navbar() {
 
         {/* Wallet Info & Disconnect */}
         <div className="flex items-center space-x-4">
-          {address && (
+          {account && (
             <span className="px-3 py-2 rounded-lg bg-gray-800 text-sm">
-              {address.slice(0, 6)}...{address.slice(-4)}
+              {account.slice(0, 6)}...{account.slice(-4)}
             </span>
           )}
           <Button onClick={handleDisconnect} variant="danger" size="sm">
