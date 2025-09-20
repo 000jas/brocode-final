@@ -1,25 +1,26 @@
-import hre from "hardhat";
-import { ethers } from "ethers";
+import { ethers } from "hardhat";
 
 async function main() {
-  console.log("Available tasks:", Object.keys(hre.tasks));
-  
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const [deployer] = await ethers.getSigners();
+  console.log("Deploying with:", deployer.address);
 
-  const lockedAmount = ethers.parseEther("1");
+  const DepositVault = await ethers.getContractFactory("DepositVault");
+  const depositVault = await DepositVault.deploy();
+  await depositVault.waitForDeployment();
+  console.log("DepositVault deployed at:", await depositVault.getAddress());
 
-  // Try using the artifacts to get contract info
-  const artifact = await hre.artifacts.readArtifact("Lock");
-  console.log("Contract artifact:", artifact.contractName);
-  
-  console.log("Deployment would happen here with unlock time:", unlockTime);
-  console.log("Locked amount:", lockedAmount.toString());
+  const WithdrawHandler = await ethers.getContractFactory("WithdrawHandler");
+  const withdrawHandler = await WithdrawHandler.deploy(await depositVault.getAddress());
+  await withdrawHandler.waitForDeployment();
+  console.log("WithdrawHandler deployed at:", await withdrawHandler.getAddress());
+
+  await depositVault.setAuthorizedWithdrawer(await withdrawHandler.getAddress(), true);
+  console.log("Authorized WithdrawHandler");
+
+  await depositVault.createVault(1);
+  console.log("Vault 1 created");
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
