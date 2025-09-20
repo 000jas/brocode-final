@@ -24,7 +24,7 @@ export default function ConnectVaultPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-      <h1 className="text-3xl font-bold mb-6">Welcome to VaultX</h1>
+      <h1 className="text-3xl font-bold mb-6">Welcome to Micro-Mint</h1>
       <p className="mb-6 text-gray-600">
         Connect your wallet to start exploring and investing in vaults.
       </p>
@@ -33,7 +33,7 @@ export default function ConnectVaultPage() {
         disabled={isConnected}
         className="px-6 py-3 text-lg rounded-xl"
       >
-        {isConnected ? "Connected" : "Connect Vault"}
+        {isConnected ? "Connected" : "Connect Wallet"}
       </Button>
       {address && (
         <p className="mt-4 text-sm text-green-600">
